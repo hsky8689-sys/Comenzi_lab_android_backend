@@ -24,10 +24,9 @@ public class UsersService implements UserDetailsService {
     public Optional<User> signup(User entity){
         return Optional.of(usersRepository.save(entity));
     }
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> found = usersRepository.findByUsername(username);
-        return found.ifPresent(m->new UserInfoDetails(found.get()));
+        return new UserInfoDetails(found.get());
     }
 }

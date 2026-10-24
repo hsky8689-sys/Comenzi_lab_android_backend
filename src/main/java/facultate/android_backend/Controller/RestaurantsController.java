@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/restaurants")
-@CrossOrigin(origins = "*")
 public class RestaurantsController {
     private final RestaurantsService restaurantsService;
     public RestaurantsController(RestaurantsService restaurantsService) {

@@ -1,11 +1,11 @@
 package facultate.android_backend.Service;
 
-import facultate.android_backend.Domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -53,8 +53,8 @@ public class JwtService {
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
-    public Boolean validateToken(String token,User userDetails) {
-        final String username = extractUsername(token);
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        final String username = token!=null ? extractUsername(token) : userDetails.getUsername();
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }
