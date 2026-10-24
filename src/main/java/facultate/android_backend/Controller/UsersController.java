@@ -1,20 +1,19 @@
 package facultate.android_backend.Controller;
 
-import facultate.android_backend.DTO.DtoFactory;
 import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.LoginRequest;
 import facultate.android_backend.DTO.SignupRequest;
-import facultate.android_backend.Domain.Order;
+import facultate.android_backend.Service.JwtService;
 import facultate.android_backend.Service.OrdersService;
 import facultate.android_backend.Service.UsersService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
-
-import static tools.jackson.databind.cfg.CoercionInputShape.Array;
 
 @RestController
 @RequestMapping("/users")
@@ -22,16 +21,27 @@ import static tools.jackson.databind.cfg.CoercionInputShape.Array;
 public class UsersController {
     private UsersService usersService;
     private OrdersService ordersService;
-    public UsersController(UsersService service,OrdersService ordersService){
+   private final JwtService jwtService;
+   private final AuthenticationManager authenticationManager;
+    public UsersController(UsersService service,
+                           OrdersService ordersService,
+                           JwtService jwtService,
+                           AuthenticationManager authenticationManager){
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
         ordersService = ordersService;
         usersService = service;
     }
     @PostMapping("/login")
     public Object handleLogin(@RequestBody LoginRequest request){
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(),request.getPassword())
+        );
         return usersService.login(request.getUsername(), request.getPassword())
                 .map(r->
                     ResponseEntity.ok(Map.of(
                        "message","User succesfully logged in",
+                       "jwt", jwtService.generateToken(request.getUsername()),
                        "id",  r.getId()
                     ))
                 ).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
