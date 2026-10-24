@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Console;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,27 +19,27 @@ public class UserInfoDetails implements UserDetails {
         try {
             this.username = userInfo.getUsername();
             this.password = userInfo.getPassword();
-            this.authorities = List.of(userInfo.getRoles().split(","))
-                    .stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
-        } catch (NullPointerException e) {
-            this.username="";
-            this.password="";
+            this.authorities = (userInfo.getRoles()!=null && !"".equals(userInfo.getRoles())) ?
+                                 List.of(userInfo.getRoles().split(","))
+                                     .stream()
+                                     .map(SimpleGrantedAuthority::new)
+                                     .collect(Collectors.toList()) :
+                                 new ArrayList<>();
+        } catch (Exception e) {
             this.authorities=new ArrayList<>();
         }
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        return this.authorities;
     }
     @Override
     public @Nullable String getPassword() {
-        return password;
+        return this.password;
     }
 
     @Override
     public String getUsername() {
-        return username;
+        return this.username;
     }
 }

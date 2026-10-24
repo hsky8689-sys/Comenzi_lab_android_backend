@@ -17,7 +17,6 @@ public class DataSeeder implements ApplicationRunner {
     private final RestaurantsService restaurantsService;
     private final UsersService usersService;
     private final UsersRepository usersRepository;
-
     public DataSeeder(RestaurantsService restaurantsService,
                       UsersService usersService,
                       UsersRepository usersRepository) {
@@ -25,16 +24,14 @@ public class DataSeeder implements ApplicationRunner {
         this.usersService = usersService;
         this.usersRepository = usersRepository;
     }
-
     @Override
     public void run(ApplicationArguments args) {
         if (usersRepository.count() > 0) return;
-
         usersService.signup(User.builder()
                 .username("radu")
                 .password("pass")
+                .roles("OWNER,CUSTOMER")
                 .build());
-
         RestaurantDto chioreana = new RestaurantDto();
         chioreana.setName("chioreana");
         chioreana.setAdress("Vivo mall");

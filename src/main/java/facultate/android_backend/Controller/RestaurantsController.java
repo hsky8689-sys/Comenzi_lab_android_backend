@@ -35,7 +35,7 @@ public class RestaurantsController {
                                                    .append(" was not added").toString())));
     }
     @GetMapping
-    public ResponseEntity<Map<String, Object>> handleIdSearch(@RequestParam long id) {
+    public Object handleIdSearch(@RequestParam long id) {
         return restaurantsService.findById(id)
                 .map(r -> ResponseEntity.ok(Map.<String, Object>of(
                         "message", "Restaurant found successfully",

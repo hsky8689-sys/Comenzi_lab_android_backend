@@ -10,7 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderDto {
     private Long id;
-    private long userId;
     private LocalDateTime orderTime;
     private List<ProductDto> products;
 }

@@ -2,12 +2,12 @@ package facultate.android_backend.Service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,13 +21,14 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims,username);
     }
-    public String createToken(Map<String,Object> claims,String username){
+    public String createToken(Map<String, Object> claims, String username) {
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
-                   .compact();
+                .claims(claims)
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .signWith(getSignKey())
+                .compact();
     }
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -43,12 +44,12 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-    private Claims extractAllClaims(String jwt){
+    private Claims extractAllClaims(String jwt) {
         return Jwts.parser()
-                .setSigningKey(getSignKey())
+                .verifyWith((SecretKey)getSignKey())
                 .build()
-                .parseClaimsJwt(jwt)
-                .getBody();
+                .parseSignedClaims(jwt)
+                .getPayload();
     }
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

@@ -30,12 +30,11 @@ public class DtoTranslator {
         answer.setId(dto.getId());
         answer.setOrderTime(dto.getOrderTime());
         User user = new User();
-        user.setId(dto.getUserId());
         answer.setUser(user);
         answer.setProductAppearences(dto.getProducts().stream()
-                        .map(r->new ProductOrder(new ProductOrderKey(dto.getId(),r.getId())
+                        .map(r->new ProductOrder(new ProductOrderKey(0L,r.getId())
                                 , new Product(r.getId())
-                                , new Order(dto.getId())
+                                , new Order(0L)
                                 ,dto.getProducts().stream()
                                 .map(ProductDto::getId)
                                 .filter(c-> Objects.equals(c, r.getId()))

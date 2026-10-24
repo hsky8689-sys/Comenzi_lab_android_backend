@@ -36,7 +36,6 @@ public class DtoFactory {
         if(order==null)return answer;
         answer.setId(order.getId());
         answer.setOrderTime(order.getOrderTime());
-        answer.setUserId(order.getUser().getId());
         answer.setProducts(order.getProductAppearences()
                                 .stream().map(po->DtoFactory.makeProductDto(po.getProduct())
                           ).collect(Collectors.toCollection(ArrayList::new)));
