@@ -25,4 +25,5 @@ public interface OrdersRepository extends JpaRepository<Order,Long> {
                     """)
     Page<Order> findByUser_Username(String username, Pageable pageable);
     Order getOrderByIdAndUser_UsernameAfter(Long id, String userUsernameAfter);
+    Optional<Order> findByIdempotencyKeyAndUser_Username(String idempotencyKey, String username);
 }

@@ -13,4 +13,5 @@ public class OrderDto {
     private LocalDateTime orderTime;
     private List<ProductDto> products;
     private Long totalPrice;
+    private String idempotencyKey;
 }

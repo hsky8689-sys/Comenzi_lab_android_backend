@@ -19,6 +19,8 @@ public class Order {
     private Long id;
     @Column
     private LocalDateTime orderTime;
+    @Column(unique = true)
+    private String idempotencyKey;
     @ManyToOne
     @JoinColumn(name="user_id")
     private User user;

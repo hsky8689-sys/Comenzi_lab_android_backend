@@ -49,6 +49,9 @@ public class OrdersService {
             return Optional.of(new Order(0L));
         }
     }
+    public Optional<Order> findByIdempotencyKey(String idempotencyKey, String username){
+        return ordersRepository.findByIdempotencyKeyAndUser_Username(idempotencyKey, username);
+    }
     public void saveProductOrders(List<ProductOrder> products){
         productOrdersRepository.saveAll(products);
     }/*

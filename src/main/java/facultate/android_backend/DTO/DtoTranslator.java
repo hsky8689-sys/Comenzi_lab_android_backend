@@ -29,6 +29,7 @@ public class DtoTranslator {
         if(dto==null)return answer;
         answer.setId(dto.getId());
         answer.setOrderTime(dto.getOrderTime());
+        answer.setIdempotencyKey(dto.getIdempotencyKey());
         User user = new User();
         answer.setUser(user);
         answer.setProductAppearences(dto.getProducts().stream()

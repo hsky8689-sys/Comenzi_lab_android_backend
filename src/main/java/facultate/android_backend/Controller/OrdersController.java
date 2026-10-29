@@ -38,6 +38,12 @@ public class OrdersController {
     public Object handleOrderPlacement(@RequestBody OrderDto order,
                                        @AuthenticationPrincipal UserDetails principal){
         final String username = principal.getUsername();
+        if(order.getIdempotencyKey()==null || order.getIdempotencyKey().isBlank())
+            return ResponseEntity.badRequest()
+                                 .body(Map.of("message","missing idempotency key"));
+        final Optional<Order> alreadyPlaced = ordersService.findByIdempotencyKey(order.getIdempotencyKey(),username);
+        if(alreadyPlaced.isPresent())
+            return ResponseEntity.ok(Map.of("message","Order has already been added","id",alreadyPlaced.get().getId()));
         final Optional<Order> placed =  ordersService.placeOrder(DtoTranslator.getFromDto(order),username);
         if(placed.get().getId()==0)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
