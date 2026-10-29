@@ -1,5 +1,6 @@
 package facultate.android_backend.Controller;
 
+import facultate.android_backend.DTO.DtoFactory;
 import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.OrderDto;
 import facultate.android_backend.Domain.Order;
@@ -8,14 +9,13 @@ import facultate.android_backend.Domain.ProductOrderKey;
 import facultate.android_backend.Service.OrdersService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.util.List;
@@ -34,11 +34,10 @@ public class OrdersController {
         this.stompClient = stompClient;
     }
     @Transactional
-    @PostMapping("")
+    @PostMapping
     public Object handleOrderPlacement(@RequestBody OrderDto order,
                                        @AuthenticationPrincipal UserDetails principal){
         final String username = principal.getUsername();
-        final Order obtained = DtoTranslator.getFromDto(order);
         final Optional<Order> placed =  ordersService.placeOrder(DtoTranslator.getFromDto(order),username);
         if(placed.get().getId()==0)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -51,5 +50,37 @@ public class OrdersController {
         });
         ordersService.saveProductOrders(appearences);
         return ResponseEntity.ok(Map.of("message","Order has been succesfully added","id",idPlaced));
+    }
+    @GetMapping("/orderId")
+    public Object getOrderStats(@RequestParam Long orderId,
+                                  @AuthenticationPrincipal UserDetails userDetails) {
+        final String username = userDetails.getUsername();
+        try {
+            return ordersService.getOrderDetails(orderId, username)
+                    .map(r -> ResponseEntity.ok(Map.of(
+                            "message", "Order data fetched succesfully",
+                            "order",r
+                    )))
+                    .orElseGet(()->ResponseEntity.badRequest().body(Map.of("message","Requested wrong stats")));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error while fetching order data"));
+        }
+    }
+    @GetMapping("/history")
+    public Object getUserOrderHistory(@AuthenticationPrincipal UserDetails userDetails,
+                                      Pageable pageable) {
+        final String username = userDetails.getUsername();
+        try {
+            final Page<OrderDto> found = ordersService.getUserOrders(username,pageable).map(DtoFactory::makeOrderDto);;
+            return !found.isEmpty()
+                    ?
+                    ResponseEntity.ok(Map.of("message","Order history succesfully obtained","orders",found)):
+                    ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                  .body(Map.of("message","No orders found for given username"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error while fetching user history"));
+        }
     }
 }

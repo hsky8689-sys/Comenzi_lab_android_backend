@@ -1,5 +1,8 @@
 package facultate.android_backend.Service;
 
+import facultate.android_backend.DTO.DtoFactory;
+import facultate.android_backend.DTO.DtoTranslator;
+import facultate.android_backend.DTO.OrderDto;
 import facultate.android_backend.Domain.Order;
 import facultate.android_backend.Domain.ProductOrder;
 import facultate.android_backend.Domain.User;
@@ -9,8 +12,9 @@ import facultate.android_backend.Repository.ProductsRepository;
 import facultate.android_backend.Repository.UsersRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,8 +36,8 @@ public class OrdersService {
         this.entityManager = entityManager;
         this.usersRepository = usersRepository;
     }
-    public List<Order> getUserOrders(long userId){
-        return ordersRepository.getUserOrders(userId);
+    public Page<Order> getUserOrders(String username, Pageable pageable){
+        return ordersRepository.findByUser_Username(username,pageable);
     }
     public Optional<Order> placeOrder(Order order,String username){
         try {
@@ -46,12 +50,8 @@ public class OrdersService {
         }
     }
     public void saveProductOrders(List<ProductOrder> products){
-        try {
-            productOrdersRepository.saveAll(products);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
+        productOrdersRepository.saveAll(products);
+    }/*
     @Transactional
     public long computeTotalAmountSpent(long userId){
         return getUserOrders(userId).stream()
@@ -60,8 +60,18 @@ public class OrdersService {
                                              .map(pa -> pa.getPricePerProduct() * pa.getQuantityOrdered())
                                              .mapToLong(Long::longValue).sum()
                             ).mapToLong(Long::longValue).sum();
-    }
+    }*/
     public long computeOrderCosts(long orderId){
         return ordersRepository.computeOrderTotalCost(orderId);
+    }
+    public Optional<OrderDto> getOrderDetails(Long orderId, String username) {
+        Order found = ordersRepository.getOrderByIdAndUser_UsernameAfter(orderId,username);
+        if(found!=null){
+            Long price = computeOrderCosts(found.getId());
+            OrderDto dto = DtoFactory.makeOrderDto(found);
+            dto.setTotalPrice(price);
+            return Optional.of(dto);
+        }
+        return Optional.empty();
     }
 }

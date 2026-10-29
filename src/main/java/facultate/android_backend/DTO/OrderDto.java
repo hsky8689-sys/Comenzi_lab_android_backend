@@ -12,4 +12,5 @@ public class OrderDto {
     private Long id;
     private LocalDateTime orderTime;
     private List<ProductDto> products;
+    private Long totalPrice;
 }
