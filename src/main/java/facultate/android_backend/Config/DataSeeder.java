@@ -36,8 +36,8 @@ public class DataSeeder implements ApplicationRunner {
                 .build());
 
         RestaurantDto chioreana = new RestaurantDto();
-        chioreana.setName("chioreana");
-        chioreana.setAdress("Vivo mall");
+        chioreana.setName("Mc donalds");
+        chioreana.setAdress("vivo mall");
         chioreana.setProducts(List.of(
                 product("burger", 10),
                 product("cola", 4),
