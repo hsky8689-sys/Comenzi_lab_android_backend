@@ -2,6 +2,8 @@ package facultate.android_backend.Repository;
 
 import facultate.android_backend.Domain.Product;
 import facultate.android_backend.Domain.Restaurant;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +18,6 @@ public interface RestaurantsRepository extends JpaRepository<Restaurant,Long> {
     @Modifying
     @Query( value = "DELETE FROM Restaurant r WHERE r.id = :id")
     int deleteRestaurant(Long id);
+    Page<Restaurant> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<Restaurant> findByIdEquals(Long id, Pageable pageable);
 }

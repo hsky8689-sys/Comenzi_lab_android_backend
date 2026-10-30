@@ -1,5 +1,6 @@
 package facultate.android_backend.Service;
 
+import facultate.android_backend.DTO.DtoFactory;
 import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.RestaurantDto;
 import facultate.android_backend.Domain.Product;
@@ -7,6 +8,8 @@ import facultate.android_backend.Domain.Restaurant;
 import facultate.android_backend.Repository.ProductsRepository;
 import facultate.android_backend.Repository.RestaurantsRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,6 +35,14 @@ public class RestaurantsService {
     }
     public Optional<Restaurant> findById(long id){
         return restaurantsRepository.findById(id);
+    }
+    @Transactional
+    public Page<RestaurantDto> search(RestaurantSearchField by, String value, Pageable pageable){
+        Page<Restaurant> found = switch (by) {
+            case NAME -> restaurantsRepository.findByNameContainingIgnoreCase(value, pageable);
+            case ID -> restaurantsRepository.findByIdEquals(Long.parseLong(value), pageable);
+        };
+        return found.map(DtoFactory::makeRestaurantDto);
     }
     @Transactional
     public Optional<Restaurant> addRestaurant(RestaurantDto dto){

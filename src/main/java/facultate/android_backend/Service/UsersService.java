@@ -20,6 +20,9 @@ public class UsersService implements UserDetailsService {
     public Optional<User> login(String username,String password){
         return usersRepository.findByUsernameAndPassword(username,password);
     }
+    public boolean usernameTaken(String username){
+        return usersRepository.findByUsername(username).isPresent();
+    }
     @Transactional
     public Optional<User> signup(User entity){
         return Optional.of(usersRepository.save(entity));

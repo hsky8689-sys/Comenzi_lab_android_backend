@@ -4,10 +4,24 @@ import facultate.android_backend.Domain.Order;
 import facultate.android_backend.Domain.Product;
 import facultate.android_backend.Domain.Restaurant;
 
+import org.springframework.data.domain.Page;
+
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DtoFactory {
+    // stable JSON for pages (serializing PageImpl directly is not guaranteed to keep its shape)
+    public static Map<String, Object> makePageResponse(String message, String itemsKey, Page<?> page){
+        return Map.of(
+                "message", message,
+                itemsKey, page.getContent(),
+                "page", page.getNumber(),
+                "size", page.getSize(),
+                "totalPages", page.getTotalPages(),
+                "totalElements", page.getTotalElements(),
+                "last", page.isLast());
+    }
     //doar in metode transactional ca da trigger la fetching....
     public static RestaurantDto makeRestaurantDto(Restaurant restaurant){
         var answer = new RestaurantDto();

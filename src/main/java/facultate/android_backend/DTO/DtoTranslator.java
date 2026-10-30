@@ -52,6 +52,7 @@ public class DtoTranslator {
         answer.setId(null);
         answer.setPassword(dto.getPassword());
         answer.setUsername(dto.getUsername());
+        answer.setEmail(dto.getEmail());
         return answer;
     }
 }
