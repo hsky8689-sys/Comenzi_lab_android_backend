@@ -85,7 +85,7 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedRestaurants() {
-        restaurant("chioreana", "Vivo mall",
+        restaurant("spartan", "Vivo mall",
                 product("burger", 10),
                 product("cola", 4),
                 product("borsec", 12),

@@ -12,7 +12,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/mywebsockets")
-                .setAllowedOrigins("http://localhost:8100","http://localhost:8080")
+                // any localhost port: ionic serve (8100), vite (5173), ...
+                .setAllowedOriginPatterns("http://localhost:*")
                 .withSockJS();
     }
     @Override

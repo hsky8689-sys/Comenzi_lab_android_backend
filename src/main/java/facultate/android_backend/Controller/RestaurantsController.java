@@ -38,7 +38,6 @@ public class RestaurantsController {
                                                     .append(dto.getId().toString())
                                                    .append(" was not added").toString())));
     }
-    // GET /restaurants/search?by=name&value=pizza&page=0&size=10   or   ?by=id&value=3
     @GetMapping("/search")
     public Object handleSearch(@RequestParam String by,
                                @RequestParam String value,

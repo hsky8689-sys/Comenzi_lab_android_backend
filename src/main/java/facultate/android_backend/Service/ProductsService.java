@@ -2,6 +2,7 @@ package facultate.android_backend.Service;
 
 import facultate.android_backend.Controller.Observer.CrudOperation;
 import facultate.android_backend.Controller.Observer.ProductOperation;
+import facultate.android_backend.DTO.DtoFactory;
 import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.ProductDto;
 import facultate.android_backend.Domain.Product;
@@ -36,9 +37,10 @@ public class ProductsService {
     @Transactional
     public long deleteProduct(ProductDto dto){
         try {
+            Optional<ProductDto> deleted = productsRepository.findById(dto.getId()).map(DtoFactory::makeProductDto);
             long result = productsRepository.deleteProduct(dto.getId()) != 0 ? dto.getId() : 0;
-            dto.setId(result);
-            messagingTemplate.convertAndSend("/products",new ProductOperation(dto, CrudOperation.DELETION));
+            if(result != 0 && deleted.isPresent())
+                messagingTemplate.convertAndSend("/products",new ProductOperation(deleted.get(), CrudOperation.DELETION));
             return result;
         } catch (Exception e) {
             System.err.println(e.getMessage());
