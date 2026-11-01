@@ -31,6 +31,10 @@ public class Restaurant {
     @OneToMany( cascade = CascadeType.MERGE, mappedBy = "restaurant")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private final List<Product> productList = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "owner_id")
+    private User owner;
     public Restaurant(long restaurant) {
         this.id = restaurant;
     }

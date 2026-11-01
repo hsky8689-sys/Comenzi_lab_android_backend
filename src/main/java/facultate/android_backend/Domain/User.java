@@ -2,6 +2,7 @@ package facultate.android_backend.Domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,4 +26,7 @@ public class User {
     private String roles;
     @Column
     private String email;
+    public User(Long id) {
+        this.id=id;
+    }
 }

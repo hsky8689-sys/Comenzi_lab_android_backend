@@ -82,7 +82,6 @@ public class OrdersController {
         final String username = userDetails.getUsername();
         try {
             final Page<OrderDto> found = ordersService.getUserOrders(username,pageable).map(DtoFactory::makeOrderDto);
-            // an empty page is a valid answer (new user / past the last page), not a 404
             return ResponseEntity.ok(DtoFactory.makePageResponse("Order history succesfully obtained","orders",found));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -20,4 +20,8 @@ public interface RestaurantsRepository extends JpaRepository<Restaurant,Long> {
     int deleteRestaurant(Long id);
     Page<Restaurant> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Page<Restaurant> findByIdEquals(Long id, Pageable pageable);
+    @Query(value = """ 
+        SELECT r from Restaurant r WHERE r.owner.username = :username
+        """)
+    Page<Restaurant> findByOwnerUsername(String username,Pageable pageable);
 }

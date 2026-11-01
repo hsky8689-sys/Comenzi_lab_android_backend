@@ -57,8 +57,6 @@ public class SecurityConfig {
                         .requestMatchers("/websockets/mywebsockets/**")
                                 .permitAll()
                         .requestMatchers("/restaurants/**","/orders/**")//.hasAnyRole("OWNER","CUSTOMER")
-                        //.requestMatchers("/orders").hasAnyRole("OWNER","CUSTOMER")
-                                //.anyRequest()
                                 .authenticated()
                 )
                 .sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

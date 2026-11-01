@@ -5,8 +5,11 @@ import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.RestaurantDto;
 import facultate.android_backend.Domain.Product;
 import facultate.android_backend.Domain.Restaurant;
+import facultate.android_backend.Domain.User;
 import facultate.android_backend.Repository.ProductsRepository;
 import facultate.android_backend.Repository.RestaurantsRepository;
+import facultate.android_backend.Repository.UsersRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,17 +17,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class RestaurantsService {
-    private RestaurantsRepository restaurantsRepository;
-    private ProductsRepository productsRepository;
+    private final RestaurantsRepository restaurantsRepository;
+    private final ProductsRepository productsRepository;
+    private final UsersRepository usersRepository;
+    private final EntityManager entityManager;
     public RestaurantsService(RestaurantsRepository restaurantsRepo,
-                              ProductsRepository productsRepository){
+                              ProductsRepository productsRepository,
+                              UsersRepository usersRepository, EntityManager entityManager){
         restaurantsRepository = restaurantsRepo;
         this.productsRepository = productsRepository;
+        this.usersRepository = usersRepository;
+        this.entityManager = entityManager;
     }
     @Transactional
     public long deleteRestaurant(Long id){
@@ -44,20 +53,31 @@ public class RestaurantsService {
         };
         return found.map(DtoFactory::makeRestaurantDto);
     }
+    public Page<RestaurantDto> getRestaurantsByUsername(String username,Pageable page){
+        try{
+            var restaurant= restaurantsRepository.findByOwnerUsername(username,page);
+            return restaurant.map(DtoFactory::makeRestaurantDto);
+        } catch (Exception e) {
+            return Page.empty();
+        }
+    }
     @Transactional
-    public Optional<Restaurant> addRestaurant(RestaurantDto dto){
-            try {
-                Restaurant added = DtoTranslator.getFromDto(dto);
-                List<Product> newProducts = dto.getProducts().stream()
+    public Optional<Restaurant> addRestaurant(RestaurantDto dto,String ownerUsername){
+        Optional<User> owner = usersRepository.findByUsername(ownerUsername);
+        if(owner.isEmpty()){
+            throw new RuntimeException("Restaurant owner was not found");
+        }
+        if(!Objects.equals(owner.get().getId(), dto.getOwnerId())){
+            throw new RuntimeException("Cannot add restaurant to different user");
+        }
+        Restaurant added = DtoTranslator.getFromDto(dto);
+        added.setOwner(owner.get());
+        List<Product> newProducts = dto.getProducts().stream()
                         .map(DtoTranslator::getFromDto)
                         .collect(Collectors.toCollection(ArrayList::new));
-                restaurantsRepository.save(added);
-                newProducts.forEach(p -> p.setRestaurant(added));
-                productsRepository.saveAll(newProducts);
-                return Optional.of(added);
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-                return Optional.empty();
-            }
+        restaurantsRepository.save(added);
+        newProducts.forEach(p -> p.setRestaurant(added));
+        productsRepository.saveAll(newProducts);
+        return Optional.of(added);
     }
 }

@@ -2,11 +2,7 @@ package facultate.android_backend.Config;
 
 import facultate.android_backend.DTO.ProductDto;
 import facultate.android_backend.DTO.RestaurantDto;
-import facultate.android_backend.Domain.Order;
-import facultate.android_backend.Domain.Product;
-import facultate.android_backend.Domain.ProductOrder;
-import facultate.android_backend.Domain.ProductOrderKey;
-import facultate.android_backend.Domain.User;
+import facultate.android_backend.Domain.*;
 import facultate.android_backend.Repository.OrdersRepository;
 import facultate.android_backend.Repository.ProductOrdersRepository;
 import facultate.android_backend.Repository.ProductsRepository;
@@ -20,11 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,6 +29,7 @@ public class DataSeeder implements ApplicationRunner {
     private final ProductOrdersRepository productOrdersRepository;
     private final PasswordEncoder passwordEncoder;
     private final Random random = new Random(42);
+    private final Map<String,User> mappedByUsername;
 
     public DataSeeder(RestaurantsService restaurantsService,
                       UsersService usersService,
@@ -45,6 +38,7 @@ public class DataSeeder implements ApplicationRunner {
                       OrdersRepository ordersRepository,
                       ProductOrdersRepository productOrdersRepository,
                       PasswordEncoder passwordEncoder) {
+        this.mappedByUsername = new HashMap<>();
         this.restaurantsService = restaurantsService;
         this.usersService = usersService;
         this.usersRepository = usersRepository;
@@ -60,10 +54,11 @@ public class DataSeeder implements ApplicationRunner {
         if (usersRepository.count() > 0) return;
 
         User radu = user("radu", "OWNER,CUSTOMER");
-        User ana = user("ana", "CUSTOMER");
+        User ana = user("ana", "CUSTOMER,OWNER");
         User mihai = user("mihai", "CUSTOMER");
-        user("ioana", "CUSTOMER");
-        user("andrei", "OWNER");
+        User ioana = user("ioana", "CUSTOMER");
+        User andrei = user("andrei", "OWNER");
+        List.of(radu,ana,mihai,ioana,andrei).forEach(u->mappedByUsername.put(u.getUsername(),u));
 
         seedRestaurants();
 
@@ -85,24 +80,32 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedRestaurants() {
-        restaurant("spartan", "Vivo mall",
+        restaurant("spartan",
+                mappedByUsername.get("radu"),
+                "Vivo mall",
                 product("burger", 10),
                 product("cola", 4),
                 product("borsec", 12),
                 product("pizza", 32));
-        restaurant("kfc", "Iulius mall",
+        restaurant("kfc",
+                mappedByUsername.get("radu"),
+                "Iulius mall",
                 product("burger", 12),
                 product("cola", 7),
                 product("pui", 16),
                 product("cartofi", 12),
                 product("sandwich", 20),
                 product("cacao", 12));
-        restaurant("soviet", "centru cluj",
+        restaurant("soviet",
+                mappedByUsername.get("radu"),
+                "centru cluj",
                 product("stalinskaya", 30),
                 product("cognac", 40),
                 product("narghilea", 20),
                 product("socata", 35));
-        restaurant("pizzeria napoli", "strada horea 14",
+        restaurant("pizzeria napoli",
+                mappedByUsername.get("ana"),
+                "strada horea 14",
                 product("margherita", 28),
                 product("quattro formaggi", 36),
                 product("quattro stagioni", 35),
@@ -125,7 +128,9 @@ public class DataSeeder implements ApplicationRunner {
                 product("limonada", 12),
                 product("apa plata", 6),
                 product("bere", 10));
-        restaurant("la mama", "bulevardul eroilor 3",
+        restaurant("la mama",
+                mappedByUsername.get("radu"),
+                "bulevardul eroilor 3",
                 product("ciorba de burta", 22),
                 product("ciorba de perisoare", 20),
                 product("sarmale cu mamaliga", 32),
@@ -137,7 +142,9 @@ public class DataSeeder implements ApplicationRunner {
                 product("papanasi", 24),
                 product("clatite", 18),
                 product("must", 9));
-        restaurant("sushi bar", "strada memorandumului 21",
+        restaurant("sushi bar",
+                mappedByUsername.get("radu"),
+                "strada memorandumului 21",
                 product("california roll", 32),
                 product("philadelphia roll", 36),
                 product("spicy tuna roll", 38),
@@ -148,7 +155,9 @@ public class DataSeeder implements ApplicationRunner {
                 product("ramen", 40),
                 product("ceai verde", 8),
                 product("mochi", 15));
-        restaurant("shaormeria centrala", "piata mihai viteazu 5",
+        restaurant("shaormeria centrala",
+                mappedByUsername.get("ana"),
+                "piata mihai viteazu 5",
                 product("shaorma mica", 22),
                 product("shaorma mare", 28),
                 product("shaorma vita", 32),
@@ -156,7 +165,9 @@ public class DataSeeder implements ApplicationRunner {
                 product("cartofi prajiti", 10),
                 product("ayran", 7),
                 product("baklava", 12));
-        restaurant("cafeneaua veche", "strada universitatii 7",
+        restaurant("cafeneaua veche",
+                mappedByUsername.get("ana"),
+                "strada universitatii 7",
                 product("espresso", 9),
                 product("cappuccino", 13),
                 product("latte", 14),
@@ -168,12 +179,13 @@ public class DataSeeder implements ApplicationRunner {
                 product("fresh portocale", 16));
     }
 
-    private void restaurant(String name, String adress, ProductDto... products) {
+    private void restaurant(String name, User owner,String adress,ProductDto... products) {
         RestaurantDto dto = new RestaurantDto();
         dto.setName(name);
         dto.setAdress(adress);
+        dto.setOwnerId(owner.getId());
         dto.setProducts(List.of(products));
-        restaurantsService.addRestaurant(dto);
+        restaurantsService.addRestaurant(dto,owner.getUsername());
     }
 
     private static ProductDto product(String name, long price) {

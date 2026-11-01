@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class RestaurantDto {
-    private Long id;
+    private Long id,ownerId;
     private String name,adress;
     private List<ProductDto> products;
 }
