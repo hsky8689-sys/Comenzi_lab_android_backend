@@ -6,9 +6,7 @@ import facultate.android_backend.DTO.DtoFactory;
 import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.ProductDto;
 import facultate.android_backend.Domain.Product;
-import facultate.android_backend.Domain.Restaurant;
 import facultate.android_backend.Repository.ProductsRepository;
-import facultate.android_backend.Repository.RestaurantsRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -19,13 +17,10 @@ import java.util.Optional;
 @Service
 public class ProductsService {
     private final ProductsRepository productsRepository;
-    private final RestaurantsRepository restaurantsRepository;
     private final SimpMessagingTemplate messagingTemplate;
     public ProductsService(ProductsRepository productsRepository,
-                           RestaurantsRepository restaurantsRepository,
                            SimpMessagingTemplate messagingTemplate){
         this.productsRepository = productsRepository;
-        this.restaurantsRepository = restaurantsRepository;
         this.messagingTemplate = messagingTemplate;
     }
     public Optional<Product> addProduct(ProductDto dto){
@@ -40,16 +35,8 @@ public class ProductsService {
         return added;
     }
     @Transactional
-    public long deleteProduct(ProductDto dto,String ownerUsername){
+    public long deleteProduct(ProductDto dto){
         try {
-            Optional<Restaurant> found = restaurantsRepository.findById(dto.getRestaurant());
-            if(found.isEmpty()){
-                throw new RuntimeException("No such restaurant found");
-            }
-            final String foundOwnerUsername = found.get().getOwner().getUsername();
-            if(!foundOwnerUsername.equals(ownerUsername)){
-                throw new RuntimeException("Operation not permitted");
-            }
             Optional<ProductDto> deleted = productsRepository.findById(dto.getId()).map(DtoFactory::makeProductDto);
             long result = productsRepository.deleteProduct(dto.getId()) != 0 ? dto.getId() : 0;
             if(result != 0 && deleted.isPresent())

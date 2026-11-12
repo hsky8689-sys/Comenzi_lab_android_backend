@@ -9,6 +9,5 @@ public class ProductDto {
     private Long id;
     private long price;
     private String name;
-    private String image;
     private long restaurant;
 }

@@ -11,7 +11,6 @@ public class DtoTranslator {
         answer.setId(dto.getId());
         answer.setAdress(dto.getAdress());
         answer.setName(dto.getName());
-        answer.setImage(dto.getImage());
         return answer;
     }
     public static Product getFromDto(ProductDto dto){
@@ -20,7 +19,6 @@ public class DtoTranslator {
         answer.setId(dto.getId());
         answer.setName(dto.getName());
         answer.setPrice(dto.getPrice());
-        answer.setImage(dto.getImage());
         Restaurant restaurant = new Restaurant();
         restaurant.setId(dto.getRestaurant());
         answer.setRestaurant(restaurant);

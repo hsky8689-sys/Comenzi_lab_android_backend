@@ -28,8 +28,6 @@ public class Restaurant {
     private String name;
     @Column
     private String adress;
-    @Column
-    private String image;
     @OneToMany( cascade = CascadeType.MERGE, mappedBy = "restaurant")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private final List<Product> productList = new ArrayList<>();

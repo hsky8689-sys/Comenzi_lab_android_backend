@@ -1,6 +1,7 @@
 package facultate.android_backend.Service;
 
 import facultate.android_backend.DTO.DtoFactory;
+import facultate.android_backend.DTO.DtoTranslator;
 import facultate.android_backend.DTO.OrderDto;
 import facultate.android_backend.Domain.Order;
 import facultate.android_backend.Domain.ProductOrder;
@@ -10,10 +11,10 @@ import facultate.android_backend.Repository.ProductOrdersRepository;
 import facultate.android_backend.Repository.ProductsRepository;
 import facultate.android_backend.Repository.UsersRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +54,16 @@ public class OrdersService {
     }
     public void saveProductOrders(List<ProductOrder> products){
         productOrdersRepository.saveAll(products);
-    }
+    }/*
+    @Transactional
+    public long computeTotalAmountSpent(long userId){
+        return getUserOrders(userId).stream()
+                             .map(o->
+                                     (Long) o.getProductAppearences().stream()
+                                             .map(pa -> pa.getPricePerProduct() * pa.getQuantityOrdered())
+                                             .mapToLong(Long::longValue).sum()
+                            ).mapToLong(Long::longValue).sum();
+    }*/
     public long computeOrderCosts(long orderId){
         return ordersRepository.computeOrderTotalCost(orderId);
     }

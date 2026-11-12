@@ -184,7 +184,6 @@ public class DataSeeder implements ApplicationRunner {
         dto.setName(name);
         dto.setAdress(adress);
         dto.setOwnerId(owner.getId());
-        dto.setImage(ImagesConfig.findImage("restaurants", name));
         dto.setProducts(List.of(products));
         restaurantsService.addRestaurant(dto,owner.getUsername());
     }
@@ -193,7 +192,6 @@ public class DataSeeder implements ApplicationRunner {
         ProductDto dto = new ProductDto();
         dto.setName(name);
         dto.setPrice(price);
-        dto.setImage(ImagesConfig.findImage("products", name));
         return dto;
     }
 

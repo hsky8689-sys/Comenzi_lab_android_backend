@@ -9,6 +9,6 @@ import java.util.List;
 @NoArgsConstructor
 public class RestaurantDto {
     private Long id,ownerId;
-    private String name,adress,image;
+    private String name,adress;
     private List<ProductDto> products;
 }
