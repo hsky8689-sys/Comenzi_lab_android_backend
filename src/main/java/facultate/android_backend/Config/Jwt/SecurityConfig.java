@@ -1,5 +1,6 @@
 package facultate.android_backend.Config.Jwt;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -55,6 +56,8 @@ public class SecurityConfig {
                         auth.requestMatchers("/users/login","/users/signup")
                                 .permitAll()
                         .requestMatchers("/websockets/mywebsockets/**")
+                                .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/**")
                                 .permitAll()
                         .requestMatchers("/restaurants/**","/orders/**")//.hasAnyRole("OWNER","CUSTOMER")
                                 .authenticated()

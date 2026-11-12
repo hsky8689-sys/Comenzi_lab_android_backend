@@ -29,6 +29,7 @@ public class DtoFactory {
         answer.setId(restaurant.getId());
         answer.setName(restaurant.getName());
         answer.setAdress(restaurant.getAdress());
+        answer.setImage(restaurant.getImage());
         answer.setProducts(restaurant.getProductList().stream()
                                      .map(DtoFactory::makeProductDto)
                                      .collect(Collectors.toCollection(ArrayList::new))
@@ -41,6 +42,7 @@ public class DtoFactory {
         answer.setId(product.getId());
         answer.setName(product.getName());
         answer.setPrice(product.getPrice());
+        answer.setImage(product.getImage());
         answer.setRestaurant(product.getRestaurant().getId());
         return answer;
     }

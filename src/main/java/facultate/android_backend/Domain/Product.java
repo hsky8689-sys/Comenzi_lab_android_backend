@@ -24,6 +24,8 @@ public class Product {
     private String name;
     @Column
     private long price;
+    @Column
+    private String image;
     @OneToMany(mappedBy = "product",fetch = FetchType.LAZY)
     private List<ProductOrder> orderAppearences;
     @ManyToOne
