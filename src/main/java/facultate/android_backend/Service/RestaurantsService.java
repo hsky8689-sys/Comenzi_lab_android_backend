@@ -14,6 +14,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,17 +30,43 @@ public class RestaurantsService {
     private final ProductsRepository productsRepository;
     private final UsersRepository usersRepository;
     private final EntityManager entityManager;
+    private final ImageStorage imageStorage;
     public RestaurantsService(RestaurantsRepository restaurantsRepo,
                               ProductsRepository productsRepository,
-                              UsersRepository usersRepository, EntityManager entityManager){
+                              UsersRepository usersRepository, EntityManager entityManager,
+                              ImageStorage imageStorage){
         restaurantsRepository = restaurantsRepo;
         this.productsRepository = productsRepository;
         this.usersRepository = usersRepository;
         this.entityManager = entityManager;
+        this.imageStorage = imageStorage;
+    }
+    // restaurantul doar daca exista si e al utilizatorului logat; altfel empty (controller-ul da 404 in ambele cazuri)
+    public Optional<Restaurant> findOwned(long id, String username){
+        return restaurantsRepository.findById(id)
+                .filter(r -> r.getOwner() != null && r.getOwner().getUsername().equals(username));
     }
     @Transactional
-    public long deleteRestaurant(Long id){
-        return restaurantsRepository.deleteRestaurant(id) !=0 ? id : 0;
+    public boolean deleteRestaurant(Long id, String username){
+        return findOwned(id, username)
+                .map(r -> restaurantsRepository.deleteRestaurant(id) != 0)
+                .orElse(false);
+    }
+    @Transactional
+    public Optional<RestaurantDto> updateRestaurant(long id, RestaurantDto dto, String username){
+        return findOwned(id, username).map(r -> {
+            // modificam entitatea gestionata, Hibernate face UPDATE la commit (dirty checking)
+            if (dto.getName() != null) r.setName(dto.getName());
+            if (dto.getAdress() != null) r.setAdress(dto.getAdress());
+            return DtoFactory.makeRestaurantDto(r);
+        });
+    }
+    @Transactional
+    public Optional<RestaurantDto> setImage(long id, MultipartFile file, String username) throws IOException {
+        Optional<Restaurant> found = findOwned(id, username);
+        if (found.isEmpty()) return Optional.empty();
+        found.get().setImage(imageStorage.store(file, "restaurants", "restaurant-" + id));
+        return found.map(DtoFactory::makeRestaurantDto);
     }
     public List<Product> getRestaurantMenu(long id){
         return restaurantsRepository.getAllProducts(id);
@@ -67,12 +96,11 @@ public class RestaurantsService {
         if(owner.isEmpty()){
             throw new RuntimeException("Restaurant owner was not found");
         }
-        if(!Objects.equals(owner.get().getId(), dto.getOwnerId())){
-            throw new RuntimeException("Cannot add restaurant to different user");
-        }
+        // owner-ul vine din token, nu din body: clientul nu poate alege al cui e restaurantul
         Restaurant added = DtoTranslator.getFromDto(dto);
+        added.setId(null);
         added.setOwner(owner.get());
-        List<Product> newProducts = dto.getProducts().stream()
+        List<Product> newProducts = Optional.ofNullable(dto.getProducts()).orElse(List.of()).stream()
                         .map(DtoTranslator::getFromDto)
                         .collect(Collectors.toCollection(ArrayList::new));
         restaurantsRepository.save(added);

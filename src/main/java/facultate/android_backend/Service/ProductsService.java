@@ -13,6 +13,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.util.Optional;
 
@@ -21,15 +24,32 @@ public class ProductsService {
     private final ProductsRepository productsRepository;
     private final RestaurantsRepository restaurantsRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RestaurantsService restaurantsService;
+    private final ImageStorage imageStorage;
     public ProductsService(ProductsRepository productsRepository,
                            RestaurantsRepository restaurantsRepository,
-                           SimpMessagingTemplate messagingTemplate){
+                           SimpMessagingTemplate messagingTemplate,
+                           RestaurantsService restaurantsService,
+                           ImageStorage imageStorage){
         this.productsRepository = productsRepository;
         this.restaurantsRepository = restaurantsRepository;
         this.messagingTemplate = messagingTemplate;
+        this.restaurantsService = restaurantsService;
+        this.imageStorage = imageStorage;
     }
-    public Optional<Product> addProduct(ProductDto dto){
-        var added = Optional.of(productsRepository.save(DtoTranslator.getFromDto(dto)));
+    // produsul doar daca restaurantul lui e al utilizatorului logat
+    public Optional<Product> findOwned(long id, String username){
+        return productsRepository.findById(id)
+                .filter(p -> restaurantsService.findOwned(p.getRestaurant().getId(), username).isPresent());
+    }
+    @Transactional
+    public Optional<Product> addProduct(ProductDto dto, String username){
+        Optional<Restaurant> restaurant = restaurantsService.findOwned(dto.getRestaurant(), username);
+        if (restaurant.isEmpty()) return Optional.empty();
+        Product product = DtoTranslator.getFromDto(dto);
+        product.setId(null);
+        product.setRestaurant(restaurant.get());
+        var added = Optional.of(productsRepository.save(product));
         try {
             dto.setId(added.map(Product::getId).orElse(null));
             messagingTemplate.convertAndSend("/products", new ProductOperation(dto, CrudOperation.ADDITION));
@@ -40,24 +60,29 @@ public class ProductsService {
         return added;
     }
     @Transactional
-    public long deleteProduct(ProductDto dto,String ownerUsername){
+    public Optional<ProductDto> updateProduct(long id, ProductDto dto, String username){
+        return findOwned(id, username).map(p -> {
+            if (dto.getName() != null) p.setName(dto.getName());
+            if (dto.getPrice() > 0) p.setPrice(dto.getPrice());
+            return DtoFactory.makeProductDto(p);
+        });
+    }
+    @Transactional
+    public Optional<ProductDto> setImage(long id, MultipartFile file, String username) throws IOException {
+        Optional<Product> found = findOwned(id, username);
+        if (found.isEmpty()) return Optional.empty();
+        found.get().setImage(imageStorage.store(file, "products", "product-" + id));
+        return found.map(DtoFactory::makeProductDto);
+    }
+    @Transactional
+    public boolean deleteProduct(long id, String ownerUsername){
+        Optional<ProductDto> deleted = findOwned(id, ownerUsername).map(DtoFactory::makeProductDto);
+        if (deleted.isEmpty() || productsRepository.deleteProduct(id) == 0) return false;
         try {
-            Optional<Restaurant> found = restaurantsRepository.findById(dto.getRestaurant());
-            if(found.isEmpty()){
-                throw new RuntimeException("No such restaurant found");
-            }
-            final String foundOwnerUsername = found.get().getOwner().getUsername();
-            if(!foundOwnerUsername.equals(ownerUsername)){
-                throw new RuntimeException("Operation not permitted");
-            }
-            Optional<ProductDto> deleted = productsRepository.findById(dto.getId()).map(DtoFactory::makeProductDto);
-            long result = productsRepository.deleteProduct(dto.getId()) != 0 ? dto.getId() : 0;
-            if(result != 0 && deleted.isPresent())
-                messagingTemplate.convertAndSend("/products",new ProductOperation(deleted.get(), CrudOperation.DELETION));
-            return result;
-        } catch (Exception e) {
+            messagingTemplate.convertAndSend("/products", new ProductOperation(deleted.get(), CrudOperation.DELETION));
+        } catch (MessagingException e) {
             System.err.println(e.getMessage());
-            return 0;
         }
+        return true;
     }
 }

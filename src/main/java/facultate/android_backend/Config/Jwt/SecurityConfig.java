@@ -59,7 +59,7 @@ public class SecurityConfig {
                                 .permitAll()
                         .requestMatchers(HttpMethod.GET, "/images/**")
                                 .permitAll()
-                        .requestMatchers("/restaurants/**","/orders/**")//.hasAnyRole("OWNER","CUSTOMER")
+                        .requestMatchers("/restaurants/**","/orders/**","/products/**")//.hasAnyRole("OWNER","CUSTOMER")
                                 .authenticated()
                 )
                 .sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

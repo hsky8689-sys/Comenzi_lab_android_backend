@@ -2,6 +2,7 @@ package facultate.android_backend.DTO;
 
 import facultate.android_backend.Domain.Order;
 import facultate.android_backend.Domain.Product;
+import facultate.android_backend.Domain.ProductOrder;
 import facultate.android_backend.Domain.Restaurant;
 
 import org.springframework.data.domain.Page;
@@ -46,6 +47,14 @@ public class DtoFactory {
         answer.setRestaurant(product.getRestaurant().getId());
         return answer;
     }
+    // produsul asa cum era in comanda: cantitatea si pretul salvate in ProductOrder,
+    // nu pretul curent din meniu (care se poate schimba intre timp)
+    public static ProductDto makeOrderedProductDto(ProductOrder line){
+        var answer = makeProductDto(line.getProduct());
+        answer.setPrice(line.getPricePerProduct());
+        answer.setQuantity(line.getQuantityOrdered());
+        return answer;
+    }
     //doar in metode transactional ca da trigger la fetching.... x2
     public static OrderDto makeOrderDto(Order order){
         var answer = new OrderDto();
@@ -53,8 +62,8 @@ public class DtoFactory {
         answer.setId(order.getId());
         answer.setOrderTime(order.getOrderTime());
         answer.setProducts(order.getProductAppearences()
-                                .stream().map(po->DtoFactory.makeProductDto(po.getProduct())
-                          ).collect(Collectors.toCollection(ArrayList::new)));
+                                .stream().map(DtoFactory::makeOrderedProductDto)
+                                .collect(Collectors.toCollection(ArrayList::new)));
         return answer;
     }
 }

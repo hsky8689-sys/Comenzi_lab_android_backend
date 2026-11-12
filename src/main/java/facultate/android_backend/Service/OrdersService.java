@@ -10,6 +10,7 @@ import facultate.android_backend.Repository.ProductOrdersRepository;
 import facultate.android_backend.Repository.ProductsRepository;
 import facultate.android_backend.Repository.UsersRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -57,14 +58,13 @@ public class OrdersService {
     public long computeOrderCosts(long orderId){
         return ordersRepository.computeOrderTotalCost(orderId);
     }
+    @Transactional
     public Optional<OrderDto> getOrderDetails(Long orderId, String username) {
-        Order found = ordersRepository.getOrderByIdAndUser_UsernameAfter(orderId,username);
-        if(found!=null){
-            Long price = computeOrderCosts(found.getId());
-            OrderDto dto = DtoFactory.makeOrderDto(found);
-            dto.setTotalPrice(price);
-            return Optional.of(dto);
-        }
-        return Optional.empty();
+        return ordersRepository.findByIdAndUser_Username(orderId, username)
+                .map(found -> {
+                    OrderDto dto = DtoFactory.makeOrderDto(found);
+                    dto.setTotalPrice(computeOrderCosts(found.getId()));
+                    return dto;
+                });
     }
 }

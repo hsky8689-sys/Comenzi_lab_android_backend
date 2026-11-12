@@ -14,6 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -26,12 +29,39 @@ public class RestaurantsController {
     public RestaurantsController(RestaurantsService restaurantsService) {
         this.restaurantsService = restaurantsService;
     }
+    private static ResponseEntity<Map<String, Object>> notFound(long id){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("restaurantId", id, "message", "Restaurant not found"));
+    }
     @DeleteMapping("/{id}")
-    public Object handleDeletion(@PathVariable("id") Long id){
-        return restaurantsService.deleteRestaurant(id) == id
-                ?
-                ResponseEntity.ok().body(Map.of("message","Restaurant succesfully deleted"))
-                :ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message","Restaurant not found"));
+    public Object handleDeletion(@PathVariable("id") Long id,
+                                 @AuthenticationPrincipal UserDetails userDetails){
+        return restaurantsService.deleteRestaurant(id, userDetails.getUsername())
+                ? ResponseEntity.ok().body(Map.of("message","Restaurant succesfully deleted"))
+                : notFound(id);
+    }
+    @PutMapping("/{id}")
+    public Object handleUpdate(@PathVariable("id") long id,
+                               @RequestBody RestaurantDto dto,
+                               @AuthenticationPrincipal UserDetails userDetails){
+        return restaurantsService.updateRestaurant(id, dto, userDetails.getUsername())
+                .map(r -> ResponseEntity.ok(Map.<String, Object>of("message", "Restaurant updated", "data", r)))
+                .orElseGet(() -> notFound(id));
+    }
+    // multipart/form-data cu campul "file"
+    @PostMapping("/{id}/image")
+    public Object handleImage(@PathVariable("id") long id,
+                              @RequestParam("file") MultipartFile file,
+                              @AuthenticationPrincipal UserDetails userDetails){
+        try {
+            return restaurantsService.setImage(id, file, userDetails.getUsername())
+                    .map(r -> ResponseEntity.ok(Map.<String, Object>of("message", "Image saved", "data", r)))
+                    .orElseGet(() -> notFound(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Could not save image"));
+        }
     }
     @PostMapping
     public Object handleAddition(@RequestBody RestaurantDto dto,
@@ -40,12 +70,10 @@ public class RestaurantsController {
             String username = userDetails.getUsername();
             return restaurantsService.addRestaurant(dto,username)
                     .map(r -> ResponseEntity.ok(Map.<String, Object>of(
-                            "message", "Restaurant found successfully",
+                            "message", "Restaurant added successfully",
                             "data", DtoFactory.makeRestaurantDto(r))))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(Map.of("message", new StringBuilder("Restaurant with id ")
-                                    .append(dto.getId().toString())
-                                    .append(" was not added").toString())));
+                            .body(Map.of("message", "Restaurant was not added")));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message","internal server error"));
         }
