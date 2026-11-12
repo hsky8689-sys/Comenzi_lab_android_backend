@@ -5,6 +5,8 @@ import facultate.android_backend.Service.ProductsService;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -17,10 +19,11 @@ public class ProductsController {
         productsService = prodService;
     }
     @DeleteMapping("/{id}")
-    public Object handleDeletion(@PathVariable("id") long id){
+    public Object handleDeletion(@AuthenticationPrincipal UserDetails userDetails
+                                ,@PathVariable("id") long id){
         var dto = new ProductDto();
         dto.setId(id);
-        return productsService.deleteProduct(dto) == id
+        return productsService.deleteProduct(dto,userDetails.getUsername()) == id
                 ? ResponseEntity.ok(Map.of(
                             "productId",id,
                         "message","Product succesfuly deleted"
