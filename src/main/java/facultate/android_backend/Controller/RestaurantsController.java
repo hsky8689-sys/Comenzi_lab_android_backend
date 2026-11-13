@@ -95,6 +95,18 @@ public class RestaurantsController {
             return ResponseEntity.badRequest().body(Map.of("message", "Id must be a number"));
         }
     }
+    // GET /restaurants/nearby?latitude=46.77&longitude=23.59&radiusKm=2&page=0&size=5
+    @GetMapping("/nearby")
+    public Object handleNearby(@RequestParam double latitude,
+                               @RequestParam double longitude,
+                               @RequestParam double radiusKm,
+                               @PageableDefault(size = 10) Pageable pageable) {
+        if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180 || radiusKm <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid point or radius"));
+        }
+        final Page<RestaurantDto> found = restaurantsService.nearby(latitude, longitude, radiusKm, pageable);
+        return ResponseEntity.ok(DtoFactory.makePageResponse("Restaurants nearby", "restaurants", found));
+    }
     @GetMapping
     public Object handleIdSearch(@RequestParam long id) {
         return restaurantsService.findById(id)

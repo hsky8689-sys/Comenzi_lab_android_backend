@@ -10,10 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-// scrie pozele urcate de utilizator in images/<folder>/ si intoarce url-ul public
 @Service
 public class ImageStorage {
-    // numele fisierului contine un uuid: o poza noua are alt url, deci browserul nu ramane cu cea veche din cache
     public String store(MultipartFile file, String folder, String prefix) throws IOException {
         String type = file.getContentType();
         if (file.isEmpty() || type == null || !type.startsWith("image/")) {

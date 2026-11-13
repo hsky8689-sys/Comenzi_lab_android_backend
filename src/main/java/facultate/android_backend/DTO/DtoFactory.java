@@ -1,5 +1,6 @@
 package facultate.android_backend.DTO;
 
+import facultate.android_backend.Domain.Location;
 import facultate.android_backend.Domain.Order;
 import facultate.android_backend.Domain.Product;
 import facultate.android_backend.Domain.ProductOrder;
@@ -31,11 +32,15 @@ public class DtoFactory {
         answer.setName(restaurant.getName());
         answer.setAdress(restaurant.getAdress());
         answer.setImage(restaurant.getImage());
+        answer.setLocation(makeLocationDto(restaurant.getLocation()));
         answer.setProducts(restaurant.getProductList().stream()
                                      .map(DtoFactory::makeProductDto)
                                      .collect(Collectors.toCollection(ArrayList::new))
         );
         return answer;
+    }
+    public static LocationDto makeLocationDto(Location location){
+        return location == null ? null : new LocationDto(location.getLatitude(), location.getLongitude());
     }
     public static ProductDto makeProductDto(Product product){
         var answer = new ProductDto();

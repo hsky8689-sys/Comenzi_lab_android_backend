@@ -12,7 +12,14 @@ public class DtoTranslator {
         answer.setAdress(dto.getAdress());
         answer.setName(dto.getName());
         answer.setImage(dto.getImage());
+        answer.setLocation(getFromDto(dto.getLocation()));
         return answer;
+    }
+    // o locatie e valida doar cu ambele coordonate, in intervalele reale
+    public static Location getFromDto(LocationDto dto){
+        if (dto == null || dto.latitude() == null || dto.longitude() == null) return null;
+        if (Math.abs(dto.latitude()) > 90 || Math.abs(dto.longitude()) > 180) return null;
+        return new Location(dto.latitude(), dto.longitude());
     }
     public static Product getFromDto(ProductDto dto){
         Product answer = new Product();

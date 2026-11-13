@@ -30,6 +30,9 @@ public class Restaurant {
     private String adress;
     @Column
     private String image;
+    // coloanele latitude / longitude din tabela restaurants
+    @Embedded
+    private Location location;
     @OneToMany( cascade = CascadeType.MERGE, mappedBy = "restaurant")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private final List<Product> productList = new ArrayList<>();

@@ -1,5 +1,6 @@
 package facultate.android_backend.Config;
 
+import facultate.android_backend.DTO.LocationDto;
 import facultate.android_backend.DTO.ProductDto;
 import facultate.android_backend.DTO.RestaurantDto;
 import facultate.android_backend.Domain.*;
@@ -82,14 +83,14 @@ public class DataSeeder implements ApplicationRunner {
     private void seedRestaurants() {
         restaurant("spartan",
                 mappedByUsername.get("radu"),
-                "Vivo mall",
+                "Vivo mall", 46.7505, 23.5418,
                 product("burger", 10),
                 product("cola", 4),
                 product("borsec", 12),
                 product("pizza", 32));
         restaurant("kfc",
                 mappedByUsername.get("radu"),
-                "Iulius mall",
+                "Iulius mall", 46.7716, 23.6261,
                 product("burger", 12),
                 product("cola", 7),
                 product("pui", 16),
@@ -98,14 +99,14 @@ public class DataSeeder implements ApplicationRunner {
                 product("cacao", 12));
         restaurant("soviet",
                 mappedByUsername.get("radu"),
-                "centru cluj",
+                "centru cluj", 46.7694, 23.5899,
                 product("stalinskaya", 30),
                 product("cognac", 40),
                 product("narghilea", 20),
                 product("socata", 35));
         restaurant("pizzeria napoli",
                 mappedByUsername.get("ana"),
-                "strada horea 14",
+                "strada horea 14", 46.7737, 23.5868,
                 product("margherita", 28),
                 product("quattro formaggi", 36),
                 product("quattro stagioni", 35),
@@ -130,7 +131,7 @@ public class DataSeeder implements ApplicationRunner {
                 product("bere", 10));
         restaurant("la mama",
                 mappedByUsername.get("radu"),
-                "bulevardul eroilor 3",
+                "bulevardul eroilor 3", 46.7695, 23.5925,
                 product("ciorba de burta", 22),
                 product("ciorba de perisoare", 20),
                 product("sarmale cu mamaliga", 32),
@@ -144,7 +145,7 @@ public class DataSeeder implements ApplicationRunner {
                 product("must", 9));
         restaurant("sushi bar",
                 mappedByUsername.get("radu"),
-                "strada memorandumului 21",
+                "strada memorandumului 21", 46.7688, 23.5848,
                 product("california roll", 32),
                 product("philadelphia roll", 36),
                 product("spicy tuna roll", 38),
@@ -157,7 +158,7 @@ public class DataSeeder implements ApplicationRunner {
                 product("mochi", 15));
         restaurant("shaormeria centrala",
                 mappedByUsername.get("ana"),
-                "piata mihai viteazu 5",
+                "piata mihai viteazu 5", 46.7726, 23.5918,
                 product("shaorma mica", 22),
                 product("shaorma mare", 28),
                 product("shaorma vita", 32),
@@ -167,7 +168,7 @@ public class DataSeeder implements ApplicationRunner {
                 product("baklava", 12));
         restaurant("cafeneaua veche",
                 mappedByUsername.get("ana"),
-                "strada universitatii 7",
+                "strada universitatii 7", 46.7672, 23.5913,
                 product("espresso", 9),
                 product("cappuccino", 13),
                 product("latte", 14),
@@ -179,10 +180,12 @@ public class DataSeeder implements ApplicationRunner {
                 product("fresh portocale", 16));
     }
 
-    private void restaurant(String name, User owner,String adress,ProductDto... products) {
+    private void restaurant(String name, User owner,String adress, double latitude, double longitude,
+                            ProductDto... products) {
         RestaurantDto dto = new RestaurantDto();
         dto.setName(name);
         dto.setAdress(adress);
+        dto.setLocation(new LocationDto(latitude, longitude));
         dto.setOwnerId(owner.getId());
         dto.setImage(ImagesConfig.findImage("restaurants", name));
         dto.setProducts(List.of(products));

@@ -12,6 +12,7 @@ import facultate.android_backend.Repository.UsersRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,9 +57,9 @@ public class RestaurantsService {
     @Transactional
     public Optional<RestaurantDto> updateRestaurant(long id, RestaurantDto dto, String username){
         return findOwned(id, username).map(r -> {
-            // modificam entitatea gestionata, Hibernate face UPDATE la commit (dirty checking)
             if (dto.getName() != null) r.setName(dto.getName());
             if (dto.getAdress() != null) r.setAdress(dto.getAdress());
+            if (dto.getLocation() != null) r.setLocation(DtoTranslator.getFromDto(dto.getLocation()));
             return DtoFactory.makeRestaurantDto(r);
         });
     }
@@ -82,6 +84,33 @@ public class RestaurantsService {
         };
         return found.map(DtoFactory::makeRestaurantDto);
     }
+    // distanta "in linie dreapta" pe suprafata Pamantului intre doua puncte (formula haversine), in km
+    static double distanceKm(double lat1, double lng1, double lat2, double lng2){
+        final double earthRadiusKm = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.pow(Math.sin(dLat / 2), 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.pow(Math.sin(dLng / 2), 2);
+        return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
+    }
+    @Transactional
+    public Page<RestaurantDto> nearby(double latitude, double longitude, double radiusKm, Pageable pageable){
+        List<RestaurantDto> found = new ArrayList<>();
+        for (Restaurant r : restaurantsRepository.findAll()) {
+            if (r.getLocation() == null) continue;
+            double distance = distanceKm(latitude, longitude,
+                    r.getLocation().getLatitude(), r.getLocation().getLongitude());
+            if (distance <= radiusKm) {
+                RestaurantDto dto = DtoFactory.makeRestaurantDto(r);
+                dto.setDistanceKm(Math.round(distance * 100) / 100.0);
+                found.add(dto);
+            }
+        }
+        found.sort(Comparator.comparing(RestaurantDto::getDistanceKm));
+        int from = (int) Math.min(pageable.getOffset(), found.size());
+        int to = Math.min(from + pageable.getPageSize(), found.size());
+        return new PageImpl<>(found.subList(from, to), pageable, found.size());
+    }
     public Page<RestaurantDto> getRestaurantsByUsername(String username,Pageable page){
         try{
             var restaurant= restaurantsRepository.findByOwnerUsername(username,page);
@@ -96,7 +125,6 @@ public class RestaurantsService {
         if(owner.isEmpty()){
             throw new RuntimeException("Restaurant owner was not found");
         }
-        // owner-ul vine din token, nu din body: clientul nu poate alege al cui e restaurantul
         Restaurant added = DtoTranslator.getFromDto(dto);
         added.setId(null);
         added.setOwner(owner.get());
